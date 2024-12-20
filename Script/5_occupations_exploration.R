@@ -99,4 +99,11 @@ ggsave("Results/Figures/Figure_3.PNG",
        scale = 1.7)
 
 lt1 %>% 
-  count(position2)
+  glimpse()
+
+lt1$position3 <-
+  
+
+
+lt1$position3 %>% 
+  fct_count(prop = TRUE)

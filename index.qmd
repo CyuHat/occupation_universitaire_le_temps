@@ -15,6 +15,7 @@ editor: visual
 #| echo: false
 # Libraries ----
 library(tidyverse, DT)
+source("Script/utilities.R")
 
 # Options ----
 span <- function(x, color="blue"){
@@ -64,6 +65,7 @@ read_csv("MyData/lt1.csv") %>%
     date = date(date),
     texte = str_trunc(texte, 100),
     ton = if_else(ton == "positif", "neutre", ton),
+    position = position3,
     position = case_match(
       position,
       "pour" ~ span("pour", "green"),
@@ -71,6 +73,7 @@ read_csv("MyData/lt1.csv") %>%
       .default = span(position, "blue")
     )
     ) %>% 
+  select(-ton) %>% 
   arrange(date) %>% 
   DT::datatable(escape = FALSE)
   
