@@ -1,5 +1,6 @@
 # libraries ----
 pacman::p_load(tidyverse)
+source("Script/utilities.R")
 
 # Options ----
 theme_set(theme_bw())
@@ -98,12 +99,13 @@ lt1 %>%
 ggsave("Results/Figures/Figure_3.PNG",
        scale = 1.7)
 
+lt1$position3 <- position3
+
 lt1 %>% 
   glimpse()
-
-lt1$position3 <-
   
+lt1 %>% 
+  filter(!str_detect(auteur, "collective|Ola")) %>% 
+  count(position3) %>% 
+  mutate(prop = n/sum(n))
 
-
-lt1$position3 %>% 
-  fct_count(prop = TRUE)

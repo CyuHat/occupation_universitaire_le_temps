@@ -78,3 +78,21 @@ read_csv("MyData/lt1.csv") %>%
   DT::datatable(escape = FALSE)
   
 ```
+
+------------------------------------------------------------------------
+
+## Articles de Laure Lugon Zugravu
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+df3 <- read_csv("MyData/df3.csv")
+
+df3 %>% 
+  filter(sujet_robust=="Oui") %>% 
+  select(type, date, url = lien_href, titre) %>% 
+  mutate(url = str_c('<a href="', url, '">Lien</a>')) %>% 
+  arrange(date) %>% 
+  DT::datatable(escape = FALSE)
+```
