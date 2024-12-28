@@ -3,7 +3,7 @@ pacman::p_load(tidyverse, janitor, elmer, tictoc)
 
 # Options ----
 sysmsg <- "
-  Dans le cadre d'une recherche sur les occupations des universités à la suite du conflit entre Israël et la Palestine, tu es une machine avancée de traitement naturel du langage pour les chercheurs. Tu aides les chercheurs à detecter les sujets et les labels. Indique si le texte est à propos des occupations universitaires [{oui} ou {non}], la position du texte sur les occupations universitaies [{pour}, {contre} ou {neutre}], dans quel lieu ça se passe (ex. {Genève}), qui sont les acteurs (ex. {étudiants, professeurs, Netanyahou}), le ton du texte [{positif}, {negatif} ou {neutre}], les critiques adressé dans le texte (ex. {naïveté}). Voici un exemple de format.
+  Dans le cadre d'une recherche sur les occupations des universités à la suite du conflit entre Israël et la Palestine, tu es une machine avancée de traitement naturel du langage pour les chercheurs. Tu aides les chercheurs à detecter les sujets et les labels. Le sujet concerne l'occupation des universités en Suisse à la suite du conflit entre Israël et la Palestine. Indique si le texte est à propos des occupations universitaires qui ont fait suite au conflit entre Israël et la Palestine [{oui} ou {non}], la position du texte sur les occupations universitaies à savoir si l'auteur du texte semble contre les occupations des université est neutre ou est pour [{pour}, {contre} ou {neutre}], dans quel lieu ça se passe (ex. {Genève}), qui sont les acteurs (ex. {étudiants, professeurs, Netanyahou}), le ton du texte [{positif}, {negatif} ou {neutre}], les critiques adressées dans le texte (ex. {naïveté}). Voici un exemple de format.
   sujet: {oui}; position: {contre}; lieu: {Genève}; acteurs: {étudiants, professeurs}; ton: {négatif}; critique: {naïveté}
   "
 
@@ -25,27 +25,46 @@ chat <- chat_ollama(
   system_prompt = c(sysmsg, sysexp)
 )
 
+
+
 # Data ----
+# lt0 <- 
+  # read_csv("Data/Occupation.csv",
+              # col_select = c(-1,-2, 
+              #  # -url, -description,
+              #  lien, 
+              #  -titre))
 lt0 <- 
-  read_csv("Data/Occupation.csv",
-         col_select = c(-1,-2, -url, -titre, -description)
-           ) %>% 
+  read_csv("Data/le_temps_israel_palestine.csv") %>% 
   clean_names() %>% 
+  select(-1, -2) %>% 
+  select(google_titre = titre,
+         info = infos,
+         auteur = author,
+         text,
+         labels
+         ) %>% 
   mutate(google_titre = str_remove(google_titre, "Plus - "),
          time = str_extract(info, "\\d{2}\\:\\d{2}"),
          time = str_c("00:", time),
          time = hms(time),
+         date = str_split_i(info, "Modifié le", 1),
+         date = str_remove_all(date, "Publié le | à | \\/ "),
+         date = dmy_hm(date),
          modifie = str_split_i(info, "Modifié le", 2),
          modifie = str_remove_all(modifie, "à |\\."),
          modifie = dmy_hm(modifie),
-         texte = str_remove_all(text, '\\[|\\]|\\{|\\}|\\"|\\:|text')
+         texte = str_remove_all(text, '\\[|\\]|\\{|\\}|\\"|\\:|text'),
+         labels = str_remove_all(labels, '\\[|\\]|\\{|\\}|\\"|\\:|labels')
          # auteur = str_replace_na(auteur)
          ) %>% 
   select(-text) %>% 
   arrange(date) %>% 
-  slice(-1, -2) %>% 
+  # slice(-1, -2) %>% 
   filter(texte!="")
   # TODO: Nettoyer les auteurs 
+
+write_csv(lt0, file = "MyData/lt0.csv")
 
 # Tagging
 tic() # 20min
@@ -69,3 +88,14 @@ lt1 <-
 toc()
 
 write_csv(lt1, "MyData/lt1.csv")
+
+lt1 %>% 
+  filter(auteur == "Laure Lugon Zugravu") %>% 
+  pull(google_titre)
+  glimpse()
+  count(auteur, sort = TRUE) %>% 
+  print(n = 100)
+
+lt1 %>% 
+  filter(sujet == "oui", str_detect(model, "(U|u)niversité")) %>% 
+  count(auteur, sort = TRUE)
