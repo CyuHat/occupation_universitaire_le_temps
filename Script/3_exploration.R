@@ -7,10 +7,10 @@ pacman::p_load(tidyverse, janitor,
 theme_set(theme_bw())
 
 # Data ----
-df3 <- read_csv("MyData/df3.csv")
+df1 <- read_rds("MyData/df1.rds")
 
 # Publication Zugravu dans le temps
-df3 %>% 
+df1 %>% 
   ggplot(aes(date)) +
   geom_histogram( fill = "cyan",
                   color = "black") +
@@ -18,7 +18,7 @@ df3 %>%
        subtitle = "2022 - 2024")
 
 # Publication Zugravu 2024
-df3 %>% 
+df1 %>% 
   filter(date > date("2023-12-31")) %>% 
   ggplot(aes(date)) +
   geom_histogram( fill = "cyan",
@@ -27,7 +27,7 @@ df3 %>%
        subtitle = "Année: 2024")
 
 # Publication Zugravu 2024
-df3 %>% 
+df1 %>% 
   filter(annee == 2024) %>% 
   mutate(date = floor_date (date, unit = "month")) %>% 
   count(date, type) %>% 
@@ -39,7 +39,7 @@ df3 %>%
 
 # Articles en lien avec le sujet
 # TODO: Filtrer les article en lien avec le sujet
-df3 %>% 
+df1 %>% 
   filter(annee == 2024) %>% 
   mutate(sujet_robust = if_else(date < "2024-05-01", "Non", sujet_robust),
          date = floor_date (date, unit = "month")) %>% 
@@ -56,18 +56,18 @@ df3 %>%
        y = "Nombre d'articles",
        x = "Date",
        fill = "En lien avec le sujet?"
-       ) +
+  ) +
   theme(legend.position = "bottom") +
   scale_fill_viridis_d()
 
 ggsave(filename = "Results/Figures/Figure_1.png",
        scale = 1.7)
 
-df3 %>% 
+df1 %>% 
   filter(
-         # publication >= "2024-05-01",
-         # publication <= "2024-05-30",
-         sujet_robust == "Oui") %>% 
+    # publication >= "2024-05-01",
+    # publication <= "2024-05-30",
+    sujet_robust == "Oui") %>% 
   arrange(publication) %>% 
   select(titre, type) %>% 
   count(type) %>% 
@@ -89,25 +89,25 @@ ggsave(file = "Results/Figures/Figure_2.png",
        scale = 1.7)
 
 # TODO: Régler le problème 
-# df3 %>% 
+# df1 %>% 
 #   filter(sujet_robust=="Oui",
 #          annee==2024) %>% 
 #   arrange(publication) %>% 
 #   select(titre, publication)
 
-df3 %>% 
+df1 %>% 
   filter(annee == 2024, month(date)==6) %>% 
   arrange(date) %>% 
   select(titre, date)
 
-df3 %>% 
+df1 %>% 
   filter(titre == "Anne Hiltpold: «Le militantisme n’a pas sa place à l’école genevoise»") %>% 
   pull(model)
 
 
 # Thématique
 # TODO: Top des thématiques par année
-df3 %>% 
+df1 %>% 
   filter(annee > 2021) %>% 
   mutate(annee = factor(annee)) %>% 
   select(annee, thematique) %>% 
@@ -127,7 +127,7 @@ df3 %>%
   scale_fill_viridis_d()
 
 # TODO: Elle n'a pas pris parole que dans le temps: donc tout le temps de parole médiatique sur tous les médias romans
-df3 %>% 
+df1 %>% 
   filter(publication >= "2024-05-01",
          publication <= "2024-08-01") %>% 
   arrange(publication) %>% 
@@ -135,7 +135,7 @@ df3 %>%
   print(n = 50)
 
 g3 <- 
-  df3 %>%
+  df1 %>%
   mutate(date_2 = floor_date(date, "months"),
          ton = case_when(
            str_detect(ton, "Négatif") ~ "Négatif",
@@ -154,7 +154,7 @@ g3 <-
 ggplotly(g3)
 
 
-df3 %>% 
+df1 %>% 
   filter(date >= "2024-05-01",
          sujet_robust == "Oui",
          type != "opinion") %>% 

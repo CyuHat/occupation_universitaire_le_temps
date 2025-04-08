@@ -7,8 +7,6 @@ format:
 editor: visual
 ---
 
-## Tableau des articles
-
 ```{r}
 #| warning: false
 #| message: false
@@ -22,61 +20,59 @@ span <- function(x, color="blue"){
   str_c('<span style="color:', color, '">', x, "</span>")
 }
 
-read_csv("MyData/lt1.csv") %>% 
-  replace_na(
-    list(
-      position = "neutre",
-      lieu = "",
-      acteur = "",
-      ton = "neutre",
-      critique = ""
-    )
-  ) %>% 
-  filter(sujet=="oui",
-         !str_detect(ton, "désarroi des étudiants et des")) %>% 
-  select(-sujet) %>% 
+remove_long <- function(text){
+  if_else(
+    str_length(text) > 120 | str_length(text) < 3,
+    "",
+    text
+  )
+}
+
+# data ----
+df2 <- read_rds("MyData/df2.rds")
+
+max_date <- max(df2$date)
+min_date <- min(df2$date)
+```
+
+
+## Tableau des articles du `r stamp("1 Mai 2024")(min_date)` au `r stamp("1 Mai 2024")(max_date)`
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+
+# Tableau
+tableau <- 
+  df2 %>% 
+  arrange(titre, desc(type), desc(position), desc(ton)) %>% 
+  group_by(titre) %>%
+  slice_head(n=1) %>%
+  ungroup() %>%
+  select(titre, date, url=lien, auteur, type, lieu, acteurs, critique, position) %>%
   mutate(
-    position2 = case_when(
-      str_detect(position, "pour") ~ "pour",
-      str_detect(position, "contre") ~ "contre",
-      str_detect(position, "neutre") ~ "neutre",
-      str_detect(position, "mélange") ~ "mélange"
+    url = str_c(
+      '<a href="',
+      url,
+      '">lien</a>'
     ),
-    ton2 = case_when(
-      str_detect(ton, "les étudiants, négatif pour l'université") ~ "neutre",
-      str_detect(ton, "critique|objectif") ~ "critique",
-      str_detect(ton, "neutre") ~ "neutre",
-      str_detect(ton, "négatif") ~ "négatif",
-      str_detect(ton, "positif") ~ "positif"
-    ),
-    auteur = if_else(str_detect(auteur, "Le Temps") | 
-                       is.na(auteur),
-                     "Le Temps", auteur),
-    lieu = if_else(lieu == "", "Suisse", lieu),
-    suisse = str_detect(lieu, "[Ss]uisse|Lausanne|Genève|Zürich|Neuchâtel|Fribourg|romandes?|générales?|spécifique|EPFL")
-  ) %>% 
-  filter(!str_detect(model, "notre suivi de la semaine"),
-         !str_detect(google_titre, "Les députés allemands|Une attaque israélienne tue trois humanitaires à Gaza|Jésus, Trump et les souliers"),
-         suisse) %>% 
-  select(-suisse, -info, -time, -modifie, -model, -position, -ton) %>% 
-  rename_with(~str_remove(.x, "\\d|google_|_href")) %>% 
-  mutate(
-    url = str_c('<a href="', url, '">Lien</a>'),
-    date = date(date),
-    texte = str_trunc(texte, 100),
-    ton = if_else(ton == "positif", "neutre", ton),
-    position = position3,
+    # url = map(url, html),
+    # texte = str_trunc(texte, 60),
     position = case_match(
       position,
       "pour" ~ span("pour", "green"),
       "contre" ~ span("contre", "red"),
       .default = span(position, "blue")
-    )
-    ) %>% 
-  select(-ton) %>% 
-  arrange(date) %>% 
+    ),
+    across(type:position, remove_long)
+    # position = map(position, html)
+  ) %>% 
+  distinct() %>% 
+  arrange(date)
+
+tableau %>% 
   DT::datatable(escape = FALSE)
-  
 ```
 
 ------------------------------------------------------------------------
@@ -87,12 +83,8 @@ read_csv("MyData/lt1.csv") %>%
 #| warning: false
 #| message: false
 #| echo: false
-df3 <- read_csv("MyData/df3.csv")
 
-df3 %>% 
-  filter(sujet_robust=="Oui") %>% 
-  select(type, date, url = lien_href, titre) %>% 
-  mutate(url = str_c('<a href="', url, '">Lien</a>')) %>% 
-  arrange(date) %>% 
+tableau %>% 
+  filter(str_detect(auteur, "Zugravu")) %>% 
   DT::datatable(escape = FALSE)
 ```
