@@ -43,6 +43,8 @@ min_date <- min(df2$date)
 #| message: false
 #| echo: false
 
+to_remove <- 0 - c(2, 7, 8, 12, 16, 18, 31, 36:38, 40, 43, 47:48, 53:55, 57:58, 61:69, 72:73, 75:80, 82:84, 86, 88, 91:95, 99:104)
+
 # Tableau
 tableau <- 
   df2 %>% 
@@ -69,7 +71,10 @@ tableau <-
     # position = map(position, html)
   ) %>% 
   distinct() %>% 
-  arrange(date)
+  arrange(date) %>% 
+  slice(
+    to_remove
+  )
 
 tableau %>% 
   DT::datatable(escape = FALSE)
