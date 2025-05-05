@@ -33,6 +33,12 @@ df2 <- read_rds("MyData/df2.rds")
 
 max_date <- max(df2$date)
 min_date <- min(df2$date)
+
+type_position <-
+  readxl::read_xlsx("Data/Le temps occupation universitaire type et position.xlsx") %>% 
+  mutate_all(str_to_lower) %>% 
+  rename_with(.fn = str_to_lower) %>% 
+  select(-article)
 ```
 
 
@@ -46,21 +52,27 @@ min_date <- min(df2$date)
 to_remove <- 0 - c(2, 7, 8, 12, 16, 18, 31, 36:38, 40, 43, 47:48, 53:55, 57:58, 61:69, 72:73, 75:80, 82:84, 86, 88, 91:95, 99:104)
 
 # Tableau
-tableau <- 
+tableau <-
   df2 %>% 
   arrange(titre, desc(type), desc(position), desc(ton)) %>% 
   group_by(titre) %>%
   slice_head(n=1) %>%
   ungroup() %>%
-  select(titre, date, url=lien, auteur, type, lieu, acteurs, critique, position) %>%
+  select(titre, date, url=lien, auteur, lieu, acteurs, critique) %>%
   mutate(
     url = str_c(
       '<a href="',
       url,
       '">lien</a>'
-    ),
-    # url = map(url, html),
-    # texte = str_trunc(texte, 60),
+    )
+    ) %>% 
+  distinct() %>% 
+  arrange(date) %>% 
+  slice(
+    to_remove
+  ) %>% 
+  bind_cols(type_position) %>% 
+  mutate(
     position = case_match(
       position,
       "pour" ~ span("pour", "green"),
@@ -68,12 +80,6 @@ tableau <-
       .default = span(position, "blue")
     ),
     across(type:position, remove_long)
-    # position = map(position, html)
-  ) %>% 
-  distinct() %>% 
-  arrange(date) %>% 
-  slice(
-    to_remove
   )
 
 tableau %>% 
